@@ -7,16 +7,7 @@ const packageDefinition = protoLoader.loadSync(path.join(__dirname, './a.proto')
 
 const personProto = grpc.loadPackageDefinition(packageDefinition);
 
-const PERSONS = [
-    {
-        name: "harkirat",
-        age: 45
-    },
-    {
-      name: "raman",
-      age: 45
-    },
-];
+const PERSONS: any[] = [];
 
 function addPerson(call: grpc.ServerUnaryCall<any, any>, callback: grpc.sendUnaryData<any>) {
   console.log(call)
@@ -28,9 +19,19 @@ function addPerson(call: grpc.ServerUnaryCall<any, any>, callback: grpc.sendUnar
     callback(null, person)
 }
 
+// @ts-ignore
+function getPersonByName(call,callback){
+    const name=call.request.name;
+    const person=PERSONS.find(x=>x.name===name);
+    callback(null,person)
+}
+
 const server = new grpc.Server();
 
-server.addService((personProto.AddressBookService as ServiceClientConstructor).service, { addPerson: addPerson });
+server.addService((personProto.AddressBookService as ServiceClientConstructor).service, { 
+    addPerson: addPerson ,
+    getPersonByName:getPersonByName
+});
 server.bindAsync('0.0.0.0:50051', grpc.ServerCredentials.createInsecure(), () => {
     server.start();
 });
